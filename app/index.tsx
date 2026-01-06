@@ -1,61 +1,18 @@
 import { Audio } from "expo-av";
-import { Recording } from 'expo-av/next';
+import { Recording } from "expo-av/build/Audio/Recording";
 import React, { useEffect, useState } from "react";
-import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, FlatList, StyleSheet, Text, View } from "react-native";
 import 'react-native-get-random-values';
 import { v4 as uuidv4 } from "uuid";
+
+// Import components
+import RecorderControls from "./components/RecorderControls";
+import VoiceNoteItem from "./components/VoiceNoteItem";
 
 interface VoiceNote {
   id: string;
   uri: string;
 }
-
-interface VoiceNoteItemProps {
-  note: VoiceNote;
-  onPlay: (uri: string) => void;
-  onDelete: (id: string) => void;
-}
-
-interface RecorderControlsProps {
-  isRecording: boolean;
-  onStart: () => void;
-  onStop: () => void;
-}
-
-// --------------------
-// VoiceNoteItem Component
-// --------------------
-const VoiceNoteItem: React.FC<VoiceNoteItemProps> = ({ note, onPlay, onDelete }) => {
-  return (
-    <View style={styles.noteItem}>
-      <Text style={styles.noteText}>🎤 Voice Note</Text>
-      <View style={styles.actions}>
-        <TouchableOpacity style={styles.playBtn} onPress={() => onPlay(note.uri)}>
-          <Text style={styles.btnText}>Play</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.deleteBtn} onPress={() => onDelete(note.id)}>
-          <Text style={styles.btnText}>Delete</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-};
-
-// --------------------
-// RecorderControls Component
-// --------------------
-const RecorderControls: React.FC<RecorderControlsProps> = ({ isRecording, onStart, onStop }) => {
-  return (
-    <TouchableOpacity
-      style={[styles.recordBtn, isRecording && styles.recording]}
-      onPress={isRecording ? onStop : onStart}
-    >
-      <Text style={styles.recordText}>
-        {isRecording ? "Stop Recording" : "Start Recording"}
-      </Text>
-    </TouchableOpacity>
-  );
-};
 
 // --------------------
 // Main App Component
@@ -135,7 +92,7 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>🎧 Audio Journal</Text>
+      <Text style={styles.title}>🎧 Audio Recording App</Text>
 
       <RecorderControls
         isRecording={!!recording}
@@ -177,50 +134,9 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 20,
   },
-  recordBtn: {
-    backgroundColor: "#22c55e",
-    padding: 15,
-    borderRadius: 12,
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  recording: {
-    backgroundColor: "#ef4444",
-  },
-  recordText: {
-    color: "white",
-    fontWeight: "bold",
-  },
-  noteItem: {
-    backgroundColor: "#1e293b",
-    padding: 15,
-    borderRadius: 12,
-    marginBottom: 10,
-  },
-  noteText: {
-    color: "#f8fafc",
-    marginBottom: 10,
-  },
-  actions: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  playBtn: {
-    backgroundColor: "#3b82f6",
-    padding: 10,
-    borderRadius: 8,
-  },
-  deleteBtn: {
-    backgroundColor: "#dc2626",
-    padding: 10,
-    borderRadius: 8,
-  },
-  btnText: {
-    color: "white",
-  },
   empty: {
     textAlign: "center",
-    color: "#9ca3af",
+    color: "#e5e7eb",
     marginTop: 30,
   },
 });
