@@ -1,12 +1,13 @@
-// app/services/permissions.ts
-import { Alert } from 'react-native';
+// services/permissions.ts
+import { Audio } from 'expo-av';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as MediaLibrary from 'expo-media-library';
-import * as FileSystem from 'expo-file-system';
-import * as Permissions from 'expo-permissions';
+import { Alert } from 'react-native';
 
 export const requestAudioPermission = async (): Promise<boolean> => {
   try {
-    const { status } = await Permissions.askAsync(Permissions.AUDIO_RECORDING);
+    // For now, continue using expo-av for permissions until full migration
+    const { status } = await Audio.requestPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert(
         'Permission Required',
@@ -24,7 +25,7 @@ export const requestAudioPermission = async (): Promise<boolean> => {
 
 export const requestStoragePermission = async (): Promise<boolean> => {
   try {
-    const { status } = await Permissions.askAsync(Permissions.MEDIA_LIBRARY);
+    const { status } = await MediaLibrary.requestPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert(
         'Storage Permission Required',
@@ -46,3 +47,6 @@ export const ensureDirExists = async (dir: string): Promise<void> => {
     await FileSystem.makeDirectoryAsync(dir, { intermediates: true });
   }
 };
+
+// Add default export to prevent expo-router warnings
+export default {};

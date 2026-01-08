@@ -1,37 +1,46 @@
-// app/index.tsx
-import React, { useEffect, useState } from 'react';
-import { Alert, FlatList, StyleSheet, Text, View, TextInput, TouchableOpacity } from 'react-native';
-import { Audio } from 'expo-av';
-import { Recording } from 'expo-av/build/Audio/Recording';
-import * as FileSystem from 'expo-file-system';
 import { format } from 'date-fns';
-
+import { Audio } from 'expo-av';
+import * as FileSystem from 'expo-file-system/legacy';
+import React, { useEffect, useState } from 'react';
+import {
+  Alert,
+  FlatList,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
 // Components
-import VoiceNoteItem from './components/VoiceNoteItem';
 import RecorderControls from './components/RecorderControls';
+import VoiceNoteItem from './components/VoiceNoteItem';
 
 // Services
+import {
+  ensureDirExists,
+  requestAudioPermission,
+} from './services/permissions';
 import * as storage from './services/storage';
-import * as permissions from './services/permissions';
 
 // Types
 import { VoiceNote } from './types';
 
-const AUDIO_DIR = `${FileSystem.documentDirectory}recordings/`;
+type AVRecording = Audio.Recording;
+type AVSound = Audio.Sound;
+
+const AUDIO_DIR = FileSystem.documentDirectory + 'recordings/';
 
 export default function App() {
-  const [recording, setRecording] = useState<Recording | null>(null);
+  const [recording, setRecording] = useState<AVRecording | null>(null);
   const [voiceNotes, setVoiceNotes] = useState<VoiceNote[]>([]);
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const [sound, setSound] = useState<AVSound | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Load voice notes on mount
   useEffect(() => {
     const loadVoiceNotes = async () => {
       try {
-        await permissions.ensureDirExists(AUDIO_DIR);
+        await ensureDirExists(AUDIO_DIR);
         const notes = await storage.getVoiceNotes();
         setVoiceNotes(notes);
       } catch (error) {
@@ -44,7 +53,6 @@ export default function App() {
     loadVoiceNotes();
   }, []);
 
-  // Clean up audio on unmount
   useEffect(() => {
     return () => {
       if (sound) {
@@ -55,7 +63,7 @@ export default function App() {
 
   const startRecording = async () => {
     try {
-      const hasPermission = await permissions.requestAudioPermission();
+      const hasPermission = await requestAudioPermission();
       if (!hasPermission) return;
 
       await Audio.setAudioModeAsync({
@@ -64,9 +72,9 @@ export default function App() {
         staysActiveInBackground: false,
       });
 
-      const { recording: newRecording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
+      const newRecording = new Audio.Recording();
+      await newRecording.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+      await newRecording.startAsync();
 
       setRecording(newRecording);
     } catch (error) {
@@ -77,16 +85,20 @@ export default function App() {
 
   const stopRecording = async () => {
     if (!recording) return;
-    
+
     try {
       await recording.stopAndUnloadAsync();
       const uri = recording.getURI();
+      const status = await recording.getStatusAsync();
 
       if (uri) {
         const fileInfo = await FileSystem.getInfoAsync(uri);
+        if (!fileInfo.exists) {
+          throw new Error('Recording file does not exist at URI: ' + uri);
+        }
+
         const newFileName = `${AUDIO_DIR}recording-${Date.now()}.m4a`;
-        
-        // Move the file to our app's directory
+
         await FileSystem.moveAsync({
           from: uri,
           to: newFileName,
@@ -95,9 +107,9 @@ export default function App() {
         const newNote: Omit<VoiceNote, 'id'> = {
           uri: newFileName,
           title: `Recording ${format(new Date(), 'MMM d, yyyy h:mm a')}`,
-          duration: 0, // You can calculate this using a library like expo-av's getStatusAsync
+          duration: status.durationMillis ? Math.round(status.durationMillis / 1000) : 0,
           date: new Date().toISOString(),
-          size: fileInfo.size || 0,
+          size: fileInfo.size ?? 0,
         };
 
         const savedNote = await storage.saveVoiceNote(newNote);
@@ -142,7 +154,7 @@ export default function App() {
     }
   };
 
-  const filteredNotes = voiceNotes.filter(note => 
+  const filteredNotes = voiceNotes.filter(note =>
     note.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -157,7 +169,7 @@ export default function App() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>🎤 Voice Notes</Text>
-      
+
       <RecorderControls
         isRecording={!!recording}
         onStart={startRecording}
@@ -184,7 +196,9 @@ export default function App() {
         )}
         ListEmptyComponent={
           <Text style={styles.emptyText}>
-            {searchQuery ? 'No matching notes found' : 'No voice notes yet. Tap the record button to create one!'}
+            {searchQuery
+              ? 'No matching notes found'
+              : 'No voice notes yet. Tap the record button to create one!'}
           </Text>
         }
         contentContainerStyle={styles.listContent}
