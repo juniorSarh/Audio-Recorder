@@ -1,6 +1,6 @@
 // app/components/VoiceNoteItem.tsx
 import { format } from "date-fns";
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { VoiceNote } from '../types';
 
@@ -9,6 +9,8 @@ interface VoiceNoteItemProps {
   onPlay: (uri: string) => void;
   onDelete: (id: string) => void;
   onEdit: (note: VoiceNote) => void;
+  isCurrentlyPlaying?: boolean;
+  currentPlaybackUri?: string | null;
 }
 
 const formatDuration = (seconds: number): string => {
@@ -23,7 +25,37 @@ const formatFileSize = (bytes: number): string => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
-const VoiceNoteItem: React.FC<VoiceNoteItemProps> = ({ note, onPlay, onDelete, onEdit }) => {
+const VoiceNoteItem: React.FC<VoiceNoteItemProps> = ({ 
+  note, 
+  onPlay, 
+  onDelete, 
+  onEdit, 
+  isCurrentlyPlaying = false, 
+  currentPlaybackUri = null 
+}) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [playbackPosition, setPlaybackPosition] = useState(0);
+  const [playbackDuration, setPlaybackDuration] = useState(0);
+
+  // Sync playing state with props
+  useEffect(() => {
+    setIsPlaying(isCurrentlyPlaying && currentPlaybackUri === note.uri);
+  }, [isCurrentlyPlaying, currentPlaybackUri, note.uri]);
+
+  const handlePlayPause = () => {
+    if (isPlaying) {
+      // Handle pause logic here
+      setIsPlaying(false);
+    } else {
+      onPlay(note.uri);
+      setIsPlaying(true);
+      // Reset position for new playback
+      setPlaybackPosition(0);
+    }
+  };
+
+  const progress = playbackDuration > 0 ? (playbackPosition / playbackDuration) : 0;
+
   return (
     <View style={styles.noteItem}>
       <View style={styles.noteHeader}>
@@ -36,12 +68,27 @@ const VoiceNoteItem: React.FC<VoiceNoteItemProps> = ({ note, onPlay, onDelete, o
         <Text style={styles.detailText}>{formatDuration(note.duration)}</Text>
         <Text style={styles.detailText}>{formatFileSize(note.size)}</Text>
       </View>
+
+      {/* Playback Progress Bar */}
+      <View style={styles.playbackContainer}>
+        <View style={styles.timeDisplay}>
+          <Text style={styles.timeText}>
+            {formatDuration(playbackPosition)} / {formatDuration(playbackDuration || note.duration)}
+          </Text>
+        </View>
+        <View style={styles.progressBar}>
+          <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
+        </View>
+      </View>
+
       <View style={styles.actions}>
         <TouchableOpacity 
-          style={styles.playBtn} 
-          onPress={() => onPlay(note.uri)}
+          style={[styles.playBtn, isPlaying && styles.pauseBtn]} 
+          onPress={handlePlayPause}
         >
-          <Text style={styles.btnText}>▶️ Play</Text>
+          <Text style={styles.btnText}>
+            {isPlaying ? '⏸️ Pause' : '▶️ Play'}
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity 
           style={styles.editBtn} 
@@ -102,6 +149,9 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     flex: 1,
   },
+  pauseBtn: {
+    backgroundColor: '#f59e0b',
+  },
   editBtn: {
     backgroundColor: '#f59e0b',
     paddingVertical: 8,
@@ -118,6 +168,27 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontWeight: '500',
     textAlign: 'center',
+  },
+  playbackContainer: {
+    marginBottom: 12,
+  },
+  timeDisplay: {
+    marginBottom: 4,
+  },
+  timeText: {
+    color: '#9ca3af',
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  progressBar: {
+    height: 4,
+    backgroundColor: '#374151',
+    borderRadius: 2,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#3b82f6',
+    borderRadius: 2,
   },
 });
 

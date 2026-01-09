@@ -41,6 +41,7 @@ export default function App() {
   const [editingNote, setEditingNote] = useState<VoiceNote | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [showSettings, setShowSettings] = useState(false);
+  const [currentPlaybackUri, setCurrentPlaybackUri] = useState<string | null>(null);
   const [settings, setSettings] = useState<AppSettings>({
     recordingQuality: 'high',
     playbackSpeed: 1.0,
@@ -165,6 +166,7 @@ export default function App() {
       await newSound.setRateAsync(settings.playbackSpeed, true);
       
       setSound(newSound);
+      setCurrentPlaybackUri(uri);
       await newSound.playAsync();
     } catch (error) {
       console.error('Error playing sound', error);
@@ -260,6 +262,8 @@ export default function App() {
             onPlay={playRecording}
             onDelete={deleteNote}
             onEdit={startEditNote}
+            isCurrentlyPlaying={currentPlaybackUri === item.uri}
+            currentPlaybackUri={currentPlaybackUri}
           />
         )}
         ListEmptyComponent={
