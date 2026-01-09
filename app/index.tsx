@@ -5,9 +5,11 @@ import React, { useEffect, useState } from 'react';
 import {
   Alert,
   FlatList,
+  Modal,
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from 'react-native';
 
@@ -36,6 +38,8 @@ export default function App() {
   const [sound, setSound] = useState<AVSound | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [editingNote, setEditingNote] = useState<VoiceNote | null>(null);
+  const [editTitle, setEditTitle] = useState('');
 
   useEffect(() => {
     const loadVoiceNotes = async () => {
@@ -154,6 +158,38 @@ export default function App() {
     }
   };
 
+  const startEditNote = (note: VoiceNote) => {
+    setEditingNote(note);
+    setEditTitle(note.title);
+  };
+
+  const saveEditNote = async () => {
+    if (!editingNote || !editTitle.trim()) return;
+
+    try {
+      const updatedNote = await storage.updateVoiceNote({
+        ...editingNote,
+        title: editTitle.trim(),
+      });
+      
+      if (updatedNote) {
+        setVoiceNotes(prev => 
+          prev.map(note => note.id === updatedNote.id ? updatedNote : note)
+        );
+        setEditingNote(null);
+        setEditTitle('');
+      }
+    } catch (error) {
+      console.error('Error updating note:', error);
+      Alert.alert('Error', 'Failed to update the voice note. Please try again.');
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingNote(null);
+    setEditTitle('');
+  };
+
   const filteredNotes = voiceNotes.filter(note =>
     note.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -192,6 +228,7 @@ export default function App() {
             note={item}
             onPlay={playRecording}
             onDelete={deleteNote}
+            onEdit={startEditNote}
           />
         )}
         ListEmptyComponent={
@@ -203,6 +240,36 @@ export default function App() {
         }
         contentContainerStyle={styles.listContent}
       />
+
+      <Modal
+        visible={!!editingNote}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={cancelEdit}>
+              <Text style={styles.cancelButton}>Cancel</Text>
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>Edit Note</Text>
+            <TouchableOpacity onPress={saveEditNote}>
+              <Text style={styles.saveButton}>Save</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.modalContent}>
+            <Text style={styles.inputLabel}>Title</Text>
+            <TextInput
+              style={styles.titleInput}
+              value={editTitle}
+              onChangeText={setEditTitle}
+              placeholder="Enter note title..."
+              placeholderTextColor="#9ca3af"
+              autoFocus
+            />
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -242,5 +309,49 @@ const styles = StyleSheet.create({
     color: '#e5e7eb',
     marginTop: 30,
     fontSize: 18,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#0f172a',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1f2937',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#e5e7eb',
+  },
+  cancelButton: {
+    color: '#9ca3af',
+    fontSize: 16,
+  },
+  saveButton: {
+    color: '#3b82f6',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  modalContent: {
+    padding: 16,
+  },
+  inputLabel: {
+    color: '#e5e7eb',
+    fontSize: 16,
+    marginBottom: 8,
+    fontWeight: '500',
+  },
+  titleInput: {
+    backgroundColor: '#1f2937',
+    color: '#f3f4f6',
+    borderRadius: 8,
+    padding: 16,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#374151',
   },
 });

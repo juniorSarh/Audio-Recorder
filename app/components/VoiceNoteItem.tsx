@@ -1,13 +1,14 @@
 // app/components/VoiceNoteItem.tsx
+import { format } from "date-fns";
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { format } from "date-fns"
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { VoiceNote } from '../types';
 
 interface VoiceNoteItemProps {
   note: VoiceNote;
   onPlay: (uri: string) => void;
   onDelete: (id: string) => void;
+  onEdit: (note: VoiceNote) => void;
 }
 
 const formatDuration = (seconds: number): string => {
@@ -22,7 +23,7 @@ const formatFileSize = (bytes: number): string => {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 };
 
-const VoiceNoteItem: React.FC<VoiceNoteItemProps> = ({ note, onPlay, onDelete }) => {
+const VoiceNoteItem: React.FC<VoiceNoteItemProps> = ({ note, onPlay, onDelete, onEdit }) => {
   return (
     <View style={styles.noteItem}>
       <View style={styles.noteHeader}>
@@ -41,6 +42,12 @@ const VoiceNoteItem: React.FC<VoiceNoteItemProps> = ({ note, onPlay, onDelete })
           onPress={() => onPlay(note.uri)}
         >
           <Text style={styles.btnText}>▶️ Play</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.editBtn} 
+          onPress={() => onEdit(note)}
+        >
+          <Text style={styles.btnText}>✏️ Edit</Text>
         </TouchableOpacity>
         <TouchableOpacity 
           style={styles.deleteBtn} 
@@ -94,6 +101,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 4,
     flex: 1,
+  },
+  editBtn: {
+    backgroundColor: '#f59e0b',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 4,
   },
   deleteBtn: {
     backgroundColor: '#ef4444',

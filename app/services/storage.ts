@@ -36,6 +36,33 @@ export const getVoiceNotes = async (): Promise<VoiceNote[]> => {
   }
 };
 
+export const updateVoiceNote = async (updatedNote: VoiceNote): Promise<VoiceNote | null> => {
+  try {
+    const notes = await getVoiceNotes();
+    const noteIndex = notes.findIndex(note => note.id === updatedNote.id);
+    
+    if (noteIndex === -1) {
+      throw new Error('Voice note not found');
+    }
+
+    const updatedNotes = [...notes];
+    updatedNotes[noteIndex] = {
+      ...updatedNotes[noteIndex],
+      ...updatedNote,
+      date: updatedNote.date || updatedNotes[noteIndex].date, // Preserve original date if not provided
+    };
+
+    // Sort by date (newest first)
+    updatedNotes.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    await AsyncStorage.setItem(VOICE_NOTES_KEY, JSON.stringify(updatedNotes));
+    return updatedNotes[noteIndex];
+  } catch (error) {
+    console.error('Error updating voice note:', error);
+    throw error;
+  }
+};
+
 export const deleteVoiceNote = async (id: string): Promise<boolean> => {
   try {
     const notes = await getVoiceNotes();
