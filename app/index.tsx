@@ -15,8 +15,8 @@ import {
 
 // Components
 import RecorderControls from './components/RecorderControls';
+import SettingsScreen from './components/SettingsScreen';
 import VoiceNoteItem from './components/VoiceNoteItem';
-
 // Services
 import {
   ensureDirExists,
@@ -25,7 +25,7 @@ import {
 import * as storage from './services/storage';
 
 // Types
-import { VoiceNote } from './types';
+import { AppSettings, VoiceNote } from './types';
 
 type AVRecording = Audio.Recording;
 type AVSound = Audio.Sound;
@@ -40,6 +40,13 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [editingNote, setEditingNote] = useState<VoiceNote | null>(null);
   const [editTitle, setEditTitle] = useState('');
+  const [showSettings, setShowSettings] = useState(false);
+  const [settings, setSettings] = useState<AppSettings>({
+    recordingQuality: 'high',
+    playbackSpeed: 1.0,
+    autoSave: true,
+    theme: 'dark',
+  });
 
   useEffect(() => {
     const loadVoiceNotes = async () => {
@@ -77,7 +84,23 @@ export default function App() {
       });
 
       const newRecording = new Audio.Recording();
-      await newRecording.prepareToRecordAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+      
+      // Use recording quality setting
+      let recordingPreset;
+      switch (settings.recordingQuality) {
+        case 'low':
+          recordingPreset = Audio.RecordingOptionsPresets.LOW_QUALITY;
+          break;
+        case 'medium':
+          recordingPreset = Audio.RecordingOptionsPresets.MEDIUM_QUALITY;
+          break;
+        case 'high':
+        default:
+          recordingPreset = Audio.RecordingOptionsPresets.HIGH_QUALITY;
+          break;
+      }
+      
+      await newRecording.prepareToRecordAsync(recordingPreset);
       await newRecording.startAsync();
 
       setRecording(newRecording);
@@ -138,6 +161,9 @@ export default function App() {
         { shouldPlay: true }
       );
 
+      // Apply playback speed setting
+      await newSound.setRateAsync(settings.playbackSpeed, true);
+      
       setSound(newSound);
       await newSound.playAsync();
     } catch (error) {
@@ -204,7 +230,12 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>🎤 Voice Notes</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>🎤 Voice Notes</Text>
+        <TouchableOpacity onPress={() => setShowSettings(true)}>
+          <Text style={styles.settingsButton}>⚙️</Text>
+        </TouchableOpacity>
+      </View>
 
       <RecorderControls
         isRecording={!!recording}
@@ -270,6 +301,17 @@ export default function App() {
           </View>
         </View>
       </Modal>
+
+      <Modal
+        visible={showSettings}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <SettingsScreen
+          onClose={() => setShowSettings(false)}
+          onSettingsChange={setSettings}
+        />
+      </Modal>
     </View>
   );
 }
@@ -286,6 +328,16 @@ const styles = StyleSheet.create({
     color: '#e5e7eb',
     textAlign: 'center',
     marginBottom: 20,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  settingsButton: {
+    fontSize: 24,
+    color: '#9ca3af',
   },
   searchInput: {
     backgroundColor: '#1f2937',
