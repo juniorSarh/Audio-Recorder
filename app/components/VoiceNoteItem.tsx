@@ -11,6 +11,7 @@ interface VoiceNoteItemProps {
   onEdit: (note: VoiceNote) => void;
   isCurrentlyPlaying?: boolean;
   currentPlaybackUri?: string | null;
+  
 }
 
 const formatDuration = (seconds: number): string => {
@@ -35,26 +36,53 @@ const VoiceNoteItem: React.FC<VoiceNoteItemProps> = ({
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackPosition, setPlaybackPosition] = useState(0);
-  const [playbackDuration, setPlaybackDuration] = useState(0);
+  const [playbackDuration, setPlaybackDuration] = useState(note.duration);
 
-  // Sync playing state with props
+  // Sync playing state with global player
   useEffect(() => {
-    setIsPlaying(isCurrentlyPlaying && currentPlaybackUri === note.uri);
+    const playing = isCurrentlyPlaying && currentPlaybackUri === note.uri;
+    setIsPlaying(playing);
+
+    if (!playing) {
+      setPlaybackPosition(0); // reset when another note plays
+    }
   }, [isCurrentlyPlaying, currentPlaybackUri, note.uri]);
+
+  // ⏱️ Counter logic (increments every second while playing)
+  useEffect(() => {
+    let interval: number | null = null;
+    if (isPlaying) {
+      interval = setInterval(() => {
+        setPlaybackPosition((prev) => {
+          if (prev >= playbackDuration) {
+            clearInterval(interval as number);
+            setIsPlaying(false);
+            return playbackDuration;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isPlaying, playbackDuration]);
 
   const handlePlayPause = () => {
     if (isPlaying) {
-      // Handle pause logic here
       setIsPlaying(false);
     } else {
       onPlay(note.uri);
       setIsPlaying(true);
-      // Reset position for new playback
       setPlaybackPosition(0);
+      setPlaybackDuration(note.duration);
     }
   };
 
-  const progress = playbackDuration > 0 ? (playbackPosition / playbackDuration) : 0;
+  const progress = playbackDuration > 0 
+    ? (playbackPosition / playbackDuration) 
+    : 0;
 
   return (
     <View style={styles.noteItem}>
@@ -64,23 +92,31 @@ const VoiceNoteItem: React.FC<VoiceNoteItemProps> = ({
           {format(new Date(note.date), 'MMM d, yyyy h:mm a')}
         </Text>
       </View>
+
       <View style={styles.noteDetails}>
         <Text style={styles.detailText}>{formatDuration(note.duration)}</Text>
         <Text style={styles.detailText}>{formatFileSize(note.size)}</Text>
       </View>
 
-      {/* Playback Progress Bar */}
+      {/* Playback Progress */}
       <View style={styles.playbackContainer}>
         <View style={styles.timeDisplay}>
           <Text style={styles.timeText}>
-            {formatDuration(playbackPosition)} / {formatDuration(playbackDuration || note.duration)}
+            {formatDuration(playbackPosition)} / {formatDuration(playbackDuration)}
           </Text>
         </View>
+
         <View style={styles.progressBar}>
-          <View style={[styles.progressFill, { width: `${progress * 100}%` }]} />
+          <View 
+            style={[
+              styles.progressFill, 
+              { width: `${progress * 100}%` }
+            ]} 
+          />
         </View>
       </View>
 
+      {/* Actions */}
       <View style={styles.actions}>
         <TouchableOpacity 
           style={[styles.playBtn, isPlaying && styles.pauseBtn]} 
@@ -90,12 +126,14 @@ const VoiceNoteItem: React.FC<VoiceNoteItemProps> = ({
             {isPlaying ? '⏸️ Pause' : '▶️ Play'}
           </Text>
         </TouchableOpacity>
+
         <TouchableOpacity 
           style={styles.editBtn} 
           onPress={() => onEdit(note)}
         >
           <Text style={styles.btnText}>✏️ Edit</Text>
         </TouchableOpacity>
+
         <TouchableOpacity 
           style={styles.deleteBtn} 
           onPress={() => onDelete(note.id)}

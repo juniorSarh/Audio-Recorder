@@ -1,50 +1,68 @@
-# Welcome to your Expo app 👋
+<img src="https://socialify.git.ci/juniorSarh/Audio-Recorder/image?language=1&owner=1&name=1&stargazers=1&theme=Light" alt="Audio-Recorder" width="640" height="320" />
+# 🎙️ Task 3 - React Native Audio Recorder
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## 📌 Overview
+This project is a **React Native Audio Recording Application (CRUD)** that allows users to record, manage, and play voice notes. It functions as a **digital voice journal**, enabling users to capture audio, store it locally, and interact with it through an intuitive interface.
 
-## Get started
+---
 
-1. Install dependencies
+## 🎯 Objective
+The goal of this project is to:
+- Build a fully functional **audio recording app**
+- Implement **CRUD operations** (Create, Read, Update, Delete)
+- Practice **React Native concepts**, including UI, state management, and file handling
 
-   ```bash
-   npm install
-   ```
+---
 
-2. Start the app
+## ⚙️ Installation & Setup
 
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
+### 1. Clone the repository
 ```bash
-npm run reset-project
+git clone https://github.com/juniorSarh/Audio-Recorder
+cd audio-recorder
 ```
+## Install Dependances
+```
+</> Bash
+npm install
+```
+## Start the app
+```
+</> Bash
+npm expo start
+```
+## 🚀 Features
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### ✅ Core Features
+- 🎤 **Audio Recording**
+  - Record voice notes using the device microphone
 
-## Learn more
+- 📄 **Voice Notes List**
+  - Displays all recorded notes
+  - Includes date, time, duration, and file size
 
-To learn more about developing your project with Expo, look at the following resources:
+- ▶️ **Playback Functionality**
+  - Play and pause recorded audio
+  - Real-time playback progress and timer
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+- 🗑️ **Delete Notes**
+  - Remove unwanted voice recordings
 
-## Join the community
+- ✏️ **Edit / Rename Notes**
+  - Rename audio recordings
 
-Join our community of developers creating universal apps.
+- ➕ **Create New Note**
+  - Simple UI to start a new recording
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+---
+
+## 🛠️ Tech Stack
+
+- **React Native (Expo)**
+- **TypeScript**
+- **AsyncStorage** (for local data persistence)
+- **Expo AV** (for audio recording & playback)
+- **Date-fns** (for date formatting)
+
+---
+
